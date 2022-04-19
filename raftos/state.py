@@ -405,18 +405,25 @@ class Follower(BaseState):
 
         # If an existing entry conflicts with a new one (same index but different terms),
         # delete the existing entry and all that follow it
+        ignore = False
         new_index = data['prev_log_index'] + 1
         try:
             if self.log[new_index]['term'] != data['term'] or (
                 self.log.last_log_index != prev_log_index
             ):
-                self.log.erase_from(new_index)
+                if self.log.last_log_index == prev_log_index + 1:
+                    ignore = True
+                else:
+                    import os
+                    print("Process {} -- log.last_log_index {} !=  {} prev_log_index. erasing!!!".format(os.getpid(), self.log.last_log_index, prev_log_index))
+                    self.log.erase_from(new_index)
         except IndexError:
             pass
 
         # It's always one entry for now
-        for entry in data['entries']:
-            self.log.write(entry['term'], entry['command'])
+        if not ignore:
+            for entry in data['entries']:
+                self.log.write(entry['term'], entry['command'])
 
         # Update commit index if necessary
         if self.log.commit_index < data['commit_index']:

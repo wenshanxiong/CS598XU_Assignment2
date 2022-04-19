@@ -1,4 +1,5 @@
 import os
+from time import monotonic
 
 from .conf import config
 
@@ -120,13 +121,14 @@ class Log:
         with open(self.filename, 'ab') as f:
             entry = {
                 'term': term,
-                'command': command
+                'command': command,
+                'delivered_at': monotonic()
             }
             f.write(self.serializer.pack(entry) + '\n'.encode())
 
         self.cache.append(entry)
-        if not len(self) % self.UPDATE_CACHE_EVERY:
-            self.cache = self.read()
+        # if not len(self) % self.UPDATE_CACHE_EVERY:
+        #     self.cache = self.read()
 
         return entry
 
